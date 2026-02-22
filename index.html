@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Chess</title>
+<style>
+body{background:#121212;color:white;text-align:center;font-family:Arial;}
+.dark{background:#121212;color:white;}
+.light{background:white;color:black;}
+#board{width:480px;height:480px;margin:auto;display:grid;grid-template-columns:repeat(8,1fr);} 
+.square{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;} 
+.white{background:#f0d9b5;} .black{background:#b58863;} 
+.modern .white{background:#ccc;} .modern .black{background:#666;} 
+button,select{padding:8px;margin:5px;}
+</style>
+</head>
+<body class="dark">
+<h1>Ultimate Chess</h1>
+<div>
+AI Difficulty:
+<select id="aiLevel"><option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option></select>
+Timer:
+<select id="timer"><option value="0">No Timer</option><option value="300">5 Min</option><option value="600">10 Min</option><option value="1800">30 Min</option></select>
+Skin:
+<select id="skin"><option value="classic">Classic</option><option value="modern">Modern</option></select>
+<br>
+<button onclick="start()">Start</button>
+<button onclick="undo()">Undo</button>
+<button onclick="toggleDark()">Dark Mode</button>
+<button onclick="saveGame()">Save</button>
+<button onclick="loadGame()">Load</button>
+<button onclick="toggleSound()">Sound</button>
+<h3 id="elo">ELO:1200</h3>
+<h3 id="wt"></h3><h3 id="bt"></h3>
+</div>
+<div id="board"></div>
+<h3>Moves</h3>
+<div id="history"></div>
+<script>
+const sound=new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
+let soundOn=true, elo=1200, turn="white", history=[], timers={white:0,black:0}, interval;
+const classic={r:"♜",n:"♞",b:"♝",q:"♛",k:"♚",p:"♟",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"};
+const modern={r:"🟥",n:"🟧",b:"🟨",q:"🟩",k:"🟦",p:"🟪",R:"🔴",N:"🟠",B:"🟡",Q:"🟢",K:"🔵",P:"🟣"};
+let pieces=classic, board=[], selected=null;
+function start(){
+pieces=document.getElementById("skin").value==="modern"?modern:classic;
+board=[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]];
+turn="white"; history=[]; document.getElementById("history").innerHTML="";
+let t=parseInt(document.getElementById("timer").value); timers.white=timers.black=t;
+clearInterval(interval); if(t>0) interval=setInterval(updateTimer,1000);
+draw();}
+function updateTimer(){timers[turn]--; document.getElementById("wt").innerText="White: "+timers.white; document.getElementById("bt").innerText="Black: "+timers.black; if(timers[turn]<=0){alert(turn+" lost on time!"); clearInterval(interval);}}
+function draw(){const bd=document.getElementById("board"); bd.className=document.getElementById("skin").value; bd.innerHTML=""; for(let y=0;y<8;y++){for(let x=0;x<8;x++){let sq=document.createElement("div"); sq.className="square "+((x+y)%2?"black":"white"); sq.innerHTML=pieces[board[y][x]]||""; sq.onclick=()=>click(x,y); bd.appendChild(sq);}}}
+function click(x,y){if(selected){move(selected.x,selected.y,x,y); selected=null;} else if(board[y][x]&&((turn==="white"&&board[y][x]===board[y][x].toUpperCase())||(turn==="black"&&board[y][x]===board[y][x].toLowerCase()))){selected={x,y};}}
+function move(x1,y1,x2,y2){let p=board[y1][x1]; if(!p) return; history.push(JSON.stringify(board)); board[y2][x2]=p; board[y1][x1]=""; if(soundOn) sound.play(); if((p==="P"&&y2===0)||(p==="p"&&y2===7)) board[y2][x2]=p==="P"?"Q":"q"; turn=turn==="white"?"black":"white"; document.getElementById("history").innerHTML+="Move "+history.length+"<br>"; draw(); if(turn==="black") setTimeout(aiMove,300);} 
+function aiMove(){let moves=[]; for(let y=0;y<8;y++){for(let x=0;x<8;x++){if(board[y][x]&&board[y][x]===board[y][x].toLowerCase()){for(let yy=0;yy<8;yy++){for(let xx=0;xx<8;xx++){moves.push({x1:x,y1:y,x2:xx,y2:yy});}}}}} let m=moves[Math.floor(Math.random()*moves.length)]; if(m) move(m.x1,m.y1,m.x2,m.y2);} 
+function undo(){if(history.length){board=JSON.parse(history.pop()); turn=turn==="white"?"black":"white"; draw();}}
+function toggleDark(){document.body.classList.toggle("light"); document.body.classList.toggle("dark");}
+function saveGame(){localStorage.setItem("chessSave",JSON.stringify({board,turn,elo})); alert("Game Saved");}
+function loadGame(){let data=JSON.parse(localStorage.getItem("chessSave")); if(data){board=data.board; turn=data.turn; elo=data.elo; document.getElementById("elo").innerText="ELO:"+elo; draw();}}
+function toggleSound(){soundOn=!soundOn; alert("Sound "+(soundOn?"On":"Off"));}
+start();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ultimate Chess</title>
+<style>
+body{background:#121212;color:white;text-align:center;font-family:Arial;}
+.dark{background:#121212;color:white;}
+.light{background:white;color:black;}
+#board{width:480px;height:480px;margin:auto;display:grid;grid-template-columns:repeat(8,1fr);} 
+.square{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;} 
+.white{background:#f0d9b5;} .black{background:#b58863;} 
+.modern .white{background:#ccc;} .modern .black{background:#666;} 
+button,select{padding:8px;margin:5px;}
+</style>
+</head>
+<body class="dark">
+<h1>Ultimate Chess</h1>
+<div>
+AI Difficulty:
+<select id="aiLevel"><option value="1">Easy</option><option value="2">Medium</option><option value="3">Hard</option></select>
+Timer:
+<select id="timer"><option value="0">No Timer</option><option value="300">5 Min</option><option value="600">10 Min</option><option value="1800">30 Min</option></select>
+Skin:
+<select id="skin"><option value="classic">Classic</option><option value="modern">Modern</option></select>
+<br>
+<button onclick="start()">Start</button>
+<button onclick="undo()">Undo</button>
+<button onclick="toggleDark()">Dark Mode</button>
+<button onclick="saveGame()">Save</button>
+<button onclick="loadGame()">Load</button>
+<button onclick="toggleSound()">Sound</button>
+<h3 id="elo">ELO:1200</h3>
+<h3 id="wt"></h3><h3 id="bt"></h3>
+</div>
+<div id="board"></div>
+<h3>Moves</h3>
+<div id="history"></div>
+<script>
+const sound=new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
+let soundOn=true, elo=1200, turn="white", history=[], timers={white:0,black:0}, interval;
+const classic={r:"♜",n:"♞",b:"♝",q:"♛",k:"♚",p:"♟",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"};
+const modern={r:"🟥",n:"🟧",b:"🟨",q:"🟩",k:"🟦",p:"🟪",R:"🔴",N:"🟠",B:"🟡",Q:"🟢",K:"🔵",P:"🟣"};
+let pieces=classic, board=[], selected=null;
+function start(){
+pieces=document.getElementById("skin").value==="modern"?modern:classic;
+board=[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]];
+turn="white"; history=[]; document.getElementById("history").innerHTML="";
+let t=parseInt(document.getElementById("timer").value); timers.white=timers.black=t;
+clearInterval(interval); if(t>0) interval=setInterval(updateTimer,1000);
+draw();}
+function updateTimer(){timers[turn]--; document.getElementById("wt").innerText="White: "+timers.white; document.getElementById("bt").innerText="Black: "+timers.black; if(timers[turn]<=0){alert(turn+" lost on time!"); clearInterval(interval);}}
+function draw(){const bd=document.getElementById("board"); bd.className=document.getElementById("skin").value; bd.innerHTML=""; for(let y=0;y<8;y++){for(let x=0;x<8;x++){let sq=document.createElement("div"); sq.className="square "+((x+y)%2?"black":"white"); sq.innerHTML=pieces[board[y][x]]||""; sq.onclick=()=>click(x,y); bd.appendChild(sq);}}}
+function click(x,y){if(selected){move(selected.x,selected.y,x,y); selected=null;} else if(board[y][x]&&((turn==="white"&&board[y][x]===board[y][x].toUpperCase())||(turn==="black"&&board[y][x]===board[y][x].toLowerCase()))){selected={x,y};}}
+function move(x1,y1,x2,y2){let p=board[y1][x1]; if(!p) return; history.push(JSON.stringify(board)); board[y2][x2]=p; board[y1][x1]=""; if(soundOn) sound.play(); if((p==="P"&&y2===0)||(p==="p"&&y2===7)) board[y2][x2]=p==="P"?"Q":"q"; turn=turn==="white"?"black":"white"; document.getElementById("history").innerHTML+="Move "+history.length+"<br>"; draw(); if(turn==="black") setTimeout(aiMove,300);} 
+function aiMove(){let moves=[]; for(let y=0;y<8;y++){for(let x=0;x<8;x++){if(board[y][x]&&board[y][x]===board[y][x].toLowerCase()){for(let yy=0;yy<8;yy++){for(let xx=0;xx<8;xx++){moves.push({x1:x,y1:y,x2:xx,y2:yy});}}}}} let m=moves[Math.floor(Math.random()*moves.length)]; if(m) move(m.x1,m.y1,m.x2,m.y2);} 
+function undo(){if(history.length){board=JSON.parse(history.pop()); turn=turn==="white"?"black":"white"; draw();}}
+function toggleDark(){document.body.classList.toggle("light"); document.body.classList.toggle("dark");}
+function saveGame(){localStorage.setItem("chessSave",JSON.stringify({board,turn,elo})); alert("Game Saved");}
+function loadGame(){let data=JSON.parse(localStorage.getItem("chessSave")); if(data){board=data.board; turn=data.turn; elo=data.elo; document.getElementById("elo").innerText="ELO:"+elo; draw();}}
+function toggleSound(){soundOn=!soundOn; alert("Sound "+(soundOn?"On":"Off"));}
+start();
+</script>
+</body>
+</html>
